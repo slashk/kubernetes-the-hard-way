@@ -124,7 +124,8 @@ $ openstack security group create kubernetes
 Allow pings:
 
 ```
-$ openstack security group rule create --ingress --src-ip 0.0.0.0/0 --protocol icmp kubernetes
+$ openstack security group rule create \
+--ingress --src-ip 0.0.0.0/0 --protocol icmp kubernetes
 +-------------------+--------------------------------------+
 | Field             | Value                                |
 +-------------------+--------------------------------------+
@@ -148,8 +149,7 @@ $ openstack security group rule create --ingress --src-ip 0.0.0.0/0 --protocol i
 $ openstack security group rule create \
 --src-ip 10.240.0.0/24 \
 --protocol tcp \
---dst-port 1:65535 \
-kubernetes
+--dst-port 1:65535 kubernetes
 +-------------------+--------------------------------------+
 | Field             | Value                                |
 +-------------------+--------------------------------------+
@@ -170,10 +170,9 @@ kubernetes
 
 ```
 $ openstack security group rule create --ingress \
-> --src-ip 10.240.0.0/24 \
-> --protocol udp \
-> --dst-port 1:65535 \
-> kubernetes
+--src-ip 10.240.0.0/24 \
+--protocol udp \
+--dst-port 1:65535 kubernetes
 +-------------------+--------------------------------------+
 | Field             | Value                                |
 +-------------------+--------------------------------------+
@@ -195,10 +194,8 @@ $ openstack security group rule create --ingress \
 
 ```
 $ openstack security group rule create \
---src-ip 0.0.0.0/0 \
---protocol tcp \
---dst-port 3389 \
-kubernetes
+--src-ip 0.0.0.0/0 --protocol tcp \
+--dst-port 3389 kubernetes
 +-------------------+--------------------------------------+
 | Field             | Value                                |
 +-------------------+--------------------------------------+
@@ -219,10 +216,8 @@ kubernetes
 
 ```
 $ openstack security group rule create \
---src-ip 0.0.0.0/0 \
---protocol tcp \
---dst-port 22 \
-kubernetes
+--src-ip 0.0.0.0/0 --protocol tcp \
+--dst-port 22 kubernetes
 +-------------------+--------------------------------------+
 | Field             | Value                                |
 +-------------------+--------------------------------------+
@@ -251,10 +246,8 @@ gcloud compute firewall-rules create kubernetes-allow-healthz \
 
 ```
 $ openstack security group rule create \
---src-ip 0.0.0.0/0 \
---protocol tcp \
---dst-port 6443 \
-kubernetes
+--src-ip 0.0.0.0/0 --protocol tcp \
+--dst-port 6443 kubernetes
 +-------------------+--------------------------------------+
 | Field             | Value                                |
 +-------------------+--------------------------------------+
@@ -306,7 +299,7 @@ All the VMs in this lab will be provisioned using Ubuntu 16.04 mainly because it
 
 ### Virtual Machines
 
-#### etcd
+#### etcd Servers
 
 ``` sh
 for x in 0 1 2; do
@@ -316,226 +309,14 @@ for x in 0 1 2; do
   --network=kubernetes
   # create server with reserved port
   openstack server create \
-  --nic port-id=$(openstack port show controller${x} -f json | jq -r .id) \
+  --nic port-id=$(openstack port show etcd${x} -f json | jq -r .id) \
   --flavor 2 \
   --key-name k8s-the-hard-way \
   --image e21e7b10-047f-426d-8073-e5230cf0be19  etcd${x}
 done
 ```
 
-
-```
-$ openstack port create etcd0  --fixed-ip subnet=kubernetes,ip-address=10.240.0.10 --network=kubernetes
-+-----------------------+---------------------------------------------------------------------------------------------+
-| Field                 | Value                                                                                       |
-+-----------------------+---------------------------------------------------------------------------------------------+
-| admin_state_up        | UP                                                                                          |
-| allowed_address_pairs |                                                                                             |
-| binding_host_id       |                                                                                             |
-| binding_profile       |                                                                                             |
-| binding_vif_details   |                                                                                             |
-| binding_vif_type      | unbound                                                                                     |
-| binding_vnic_type     | normal                                                                                      |
-| created_at            | 2016-09-24T23:27:56                                                                         |
-| description           |                                                                                             |
-| device_id             |                                                                                             |
-| device_owner          |                                                                                             |
-| dns_assignment        | fqdn='host-10-240-0-10.pepple.info.', hostname='host-10-240-0-10', ip_address='10.240.0.10' |
-| dns_name              |                                                                                             |
-| extra_dhcp_opts       |                                                                                             |
-| fixed_ips             | ip_address='10.240.0.10', subnet_id='6c6936eb-76fb-491e-8d4b-dae921b2b618'                  |
-| headers               |                                                                                             |
-| id                    | 107471ba-12bb-49fb-b5ed-337b2b76245d                                                        |
-| mac_address           | fa:16:3e:f8:ad:d4                                                                           |
-| name                  | etcd0                                                                                       |
-| network_id            | 986e3dfb-2ad4-451d-a05e-4350ef30d098                                                        |
-| project_id            | 98fe59987fb74194b865a05627e41618                                                            |
-| security_groups       | d8215489-4cc2-4bde-847f-c5f6b0457ae7                                                        |
-| status                | DOWN                                                                                        |
-| updated_at            | 2016-09-24T23:27:56                                                                         |
-+-----------------------+---------------------------------------------------------------------------------------------+
-$ openstack server create \
---nic port-id=$(openstack port show etcd0 -f json | jq -r .id) \
---flavor 2 \
---image e21e7b10-047f-426d-8073-e5230cf0be19  etcd0
-+--------------------------------------+---------------------------------------------------------+
-| Field                                | Value                                                   |
-+--------------------------------------+---------------------------------------------------------+
-| OS-DCF:diskConfig                    | MANUAL                                                  |
-| OS-EXT-AZ:availability_zone          |                                                         |
-| OS-EXT-SRV-ATTR:host                 | None                                                    |
-| OS-EXT-SRV-ATTR:hypervisor_hostname  | None                                                    |
-| OS-EXT-SRV-ATTR:instance_name        | instance-00000058                                       |
-| OS-EXT-STS:power_state               | NOSTATE                                                 |
-| OS-EXT-STS:task_state                | scheduling                                              |
-| OS-EXT-STS:vm_state                  | building                                                |
-| OS-SRV-USG:launched_at               | None                                                    |
-| OS-SRV-USG:terminated_at             | None                                                    |
-| accessIPv4                           |                                                         |
-| accessIPv6                           |                                                         |
-| addresses                            |                                                         |
-| adminPass                            | nxA7FY6MzHTZ                                            |
-| config_drive                         |                                                         |
-| created                              | 2016-09-24T23:40:54Z                                    |
-| flavor                               | m1.small (2)                                            |
-| hostId                               |                                                         |
-| id                                   | be5135bd-2674-4fc2-bf17-a5812e9a5de6                    |
-| image                                | Ubuntu 16.04 LTS (e21e7b10-047f-426d-8073-e5230cf0be19) |
-| key_name                             | None                                                    |
-| name                                 | etcd0                                                   |
-| os-extended-volumes:volumes_attached | []                                                      |
-| progress                             | 0                                                       |
-| project_id                           | 98fe59987fb74194b865a05627e41618                        |
-| properties                           |                                                         |
-| security_groups                      | [{u'name': u'default'}]                                 |
-| status                               | BUILD                                                   |
-| updated                              | 2016-09-24T23:40:54Z                                    |
-| user_id                              | 204a0652a1dd4c07b7aa3aee59d75e17                        |
-+--------------------------------------+---------------------------------------------------------+
-```
-
-```
-$ openstack port create etcd1  --fixed-ip subnet=kubernetes,ip-address=10.240.0.11 --network=kubernetes
-+-----------------------+---------------------------------------------------------------------------------------------+
-| Field                 | Value                                                                                       |
-+-----------------------+---------------------------------------------------------------------------------------------+
-| admin_state_up        | UP                                                                                          |
-| allowed_address_pairs |                                                                                             |
-| binding_host_id       |                                                                                             |
-| binding_profile       |                                                                                             |
-| binding_vif_details   |                                                                                             |
-| binding_vif_type      | unbound                                                                                     |
-| binding_vnic_type     | normal                                                                                      |
-| created_at            | 2016-09-24T23:43:03                                                                         |
-| description           |                                                                                             |
-| device_id             |                                                                                             |
-| device_owner          |                                                                                             |
-| dns_assignment        | fqdn='host-10-240-0-11.pepple.info.', hostname='host-10-240-0-11', ip_address='10.240.0.11' |
-| dns_name              |                                                                                             |
-| extra_dhcp_opts       |                                                                                             |
-| fixed_ips             | ip_address='10.240.0.11', subnet_id='6c6936eb-76fb-491e-8d4b-dae921b2b618'                  |
-| headers               |                                                                                             |
-| id                    | 809f7c89-85cc-4fb4-a5a1-f59ead8de63c                                                        |
-| mac_address           | fa:16:3e:d4:0d:84                                                                           |
-| name                  | etcd1                                                                                       |
-| network_id            | 986e3dfb-2ad4-451d-a05e-4350ef30d098                                                        |
-| project_id            | 98fe59987fb74194b865a05627e41618                                                            |
-| security_groups       | d8215489-4cc2-4bde-847f-c5f6b0457ae7                                                        |
-| status                | DOWN                                                                                        |
-| updated_at            | 2016-09-24T23:43:03                                                                         |
-+-----------------------+---------------------------------------------------------------------------------------------+
-$ openstack server create \
---nic port-id=$(openstack port show etcd1 -f json | jq -r .id) \
---flavor 2 \
---image e21e7b10-047f-426d-8073-e5230cf0be19  etcd1
-+--------------------------------------+---------------------------------------------------------+
-| Field                                | Value                                                   |
-+--------------------------------------+---------------------------------------------------------+
-| OS-DCF:diskConfig                    | MANUAL                                                  |
-| OS-EXT-AZ:availability_zone          |                                                         |
-| OS-EXT-SRV-ATTR:host                 | None                                                    |
-| OS-EXT-SRV-ATTR:hypervisor_hostname  | None                                                    |
-| OS-EXT-SRV-ATTR:instance_name        | instance-00000059                                       |
-| OS-EXT-STS:power_state               | NOSTATE                                                 |
-| OS-EXT-STS:task_state                | scheduling                                              |
-| OS-EXT-STS:vm_state                  | building                                                |
-| OS-SRV-USG:launched_at               | None                                                    |
-| OS-SRV-USG:terminated_at             | None                                                    |
-| accessIPv4                           |                                                         |
-| accessIPv6                           |                                                         |
-| addresses                            |                                                         |
-| adminPass                            | gFy2xLgq4f4Z                                            |
-| config_drive                         |                                                         |
-| created                              | 2016-09-24T23:44:53Z                                    |
-| flavor                               | m1.small (2)                                            |
-| hostId                               |                                                         |
-| id                                   | 772ebeb5-fe4c-48a9-b40f-98a05af5062d                    |
-| image                                | Ubuntu 16.04 LTS (e21e7b10-047f-426d-8073-e5230cf0be19) |
-| key_name                             | None                                                    |
-| name                                 | etcd1                                                   |
-| os-extended-volumes:volumes_attached | []                                                      |
-| progress                             | 0                                                       |
-| project_id                           | 98fe59987fb74194b865a05627e41618                        |
-| properties                           |                                                         |
-| security_groups                      | [{u'name': u'default'}]                                 |
-| status                               | BUILD                                                   |
-| updated                              | 2016-09-24T23:44:54Z                                    |
-| user_id                              | 204a0652a1dd4c07b7aa3aee59d75e17                        |
-+--------------------------------------+---------------------------------------------------------+
-```
-
-```
-$ openstack port create etcd2  --fixed-ip subnet=kubernetes,ip-address=10.240.0.12 --network=kubernetes
-+-----------------------+---------------------------------------------------------------------------------------------+
-| Field                 | Value                                                                                       |
-+-----------------------+---------------------------------------------------------------------------------------------+
-| admin_state_up        | UP                                                                                          |
-| allowed_address_pairs |                                                                                             |
-| binding_host_id       |                                                                                             |
-| binding_profile       |                                                                                             |
-| binding_vif_details   |                                                                                             |
-| binding_vif_type      | unbound                                                                                     |
-| binding_vnic_type     | normal                                                                                      |
-| created_at            | 2016-09-24T23:48:19                                                                         |
-| description           |                                                                                             |
-| device_id             |                                                                                             |
-| device_owner          |                                                                                             |
-| dns_assignment        | fqdn='host-10-240-0-12.pepple.info.', hostname='host-10-240-0-12', ip_address='10.240.0.12' |
-| dns_name              |                                                                                             |
-| extra_dhcp_opts       |                                                                                             |
-| fixed_ips             | ip_address='10.240.0.12', subnet_id='6c6936eb-76fb-491e-8d4b-dae921b2b618'                  |
-| headers               |                                                                                             |
-| id                    | b8bf5c48-abbb-4c11-aa0c-6ce0cc8339f1                                                        |
-| mac_address           | fa:16:3e:28:67:44                                                                           |
-| name                  | etcd2                                                                                       |
-| network_id            | 986e3dfb-2ad4-451d-a05e-4350ef30d098                                                        |
-| project_id            | 98fe59987fb74194b865a05627e41618                                                            |
-| security_groups       | d8215489-4cc2-4bde-847f-c5f6b0457ae7                                                        |
-| status                | DOWN                                                                                        |
-| updated_at            | 2016-09-24T23:48:19                                                                         |
-+-----------------------+---------------------------------------------------------------------------------------------+
-$ openstack server create \
---nic port-id=$(openstack port show etcd2 -f json | jq -r .id) \
---flavor 2 \
---image e21e7b10-047f-426d-8073-e5230cf0be19  etcd2
-+--------------------------------------+---------------------------------------------------------+
-| Field                                | Value                                                   |
-+--------------------------------------+---------------------------------------------------------+
-| OS-DCF:diskConfig                    | MANUAL                                                  |
-| OS-EXT-AZ:availability_zone          |                                                         |
-| OS-EXT-SRV-ATTR:host                 | None                                                    |
-| OS-EXT-SRV-ATTR:hypervisor_hostname  | None                                                    |
-| OS-EXT-SRV-ATTR:instance_name        | instance-0000005a                                       |
-| OS-EXT-STS:power_state               | NOSTATE                                                 |
-| OS-EXT-STS:task_state                | scheduling                                              |
-| OS-EXT-STS:vm_state                  | building                                                |
-| OS-SRV-USG:launched_at               | None                                                    |
-| OS-SRV-USG:terminated_at             | None                                                    |
-| accessIPv4                           |                                                         |
-| accessIPv6                           |                                                         |
-| addresses                            |                                                         |
-| adminPass                            | a6L86B3knFzt                                            |
-| config_drive                         |                                                         |
-| created                              | 2016-09-24T23:50:25Z                                    |
-| flavor                               | m1.small (2)                                            |
-| hostId                               |                                                         |
-| id                                   | 2e326862-081d-4c1c-8c77-16ee32b41cf6                    |
-| image                                | Ubuntu 16.04 LTS (e21e7b10-047f-426d-8073-e5230cf0be19) |
-| key_name                             | None                                                    |
-| name                                 | etcd2                                                   |
-| os-extended-volumes:volumes_attached | []                                                      |
-| progress                             | 0                                                       |
-| project_id                           | 98fe59987fb74194b865a05627e41618                        |
-| properties                           |                                                         |
-| security_groups                      | [{u'name': u'default'}]                                 |
-| status                               | BUILD                                                   |
-| updated                              | 2016-09-24T23:50:25Z                                    |
-| user_id                              | 204a0652a1dd4c07b7aa3aee59d75e17                        |
-+--------------------------------------+---------------------------------------------------------+
-```
-
 #### Kubernetes Controllers
-
 
 ``` sh
 for x in 0 1 2; do
@@ -551,7 +332,6 @@ for x in 0 1 2; do
   --image e21e7b10-047f-426d-8073-e5230cf0be19  controller${x}
 done
 ```
-
 
 #### Kubernetes Workers
 
